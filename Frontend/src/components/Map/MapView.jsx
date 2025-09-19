@@ -22,7 +22,15 @@ import { formatSports } from '@/utils/formatSports';
 
 // Styles
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { debounce } from 'lodash';
+
+// ✅ FONCTION DEBOUNCE SIMPLE AU LIEU DE LODASH
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
 
 export default function MapView() {
   // ✅ GESTION D'ERREUR POUR ÉVITER LES CRASHES
@@ -76,7 +84,7 @@ export default function MapView() {
   const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
   const [styleLoaded, setStyleLoaded] = useState(false);
   
-  // ✅ HOOKS
+  // ✅ HOOKS - VÉRIFIER QUE CES VALEURS SONT STABLES
   const { equipments, errorEquipments, loadingEquipments } = useEquipments();
   const { sports, errorSports, loadingSports } = useSports();
   
@@ -92,62 +100,100 @@ export default function MapView() {
   const [showNavigation, setShowNavigation] = useState(false);
   const [showUnifiedPopup, setShowUnifiedPopup] = useState(false);
 
-  // ✅ MÉMORISER getFilteredFeatures AVEC useMemo AU LIEU DE useCallback
+  // ✅ STABILISER LES DÉPENDANCES POUR ÉVITER L'ERREUR #310
+  const equipmentsFeatures = useMemo(() => {
+    return equipments?.features || [];
+  }, [equipments?.features]);
+
+  const activeFiltersStable = useMemo(() => {
+    return [...activeFilters];
+  }, [activeFilters.join(',')]);
+
+  // ✅ FILTRAGE OPTIMISÉ ET SÉCURISÉ
   const filteredEquipments = useMemo(() => {
-    if (!equipments?.features) {
+    // ✅ VÉRIFICATION DÉFENSIVE
+    if (!equipmentsFeatures || !Array.isArray(equipmentsFeatures)) {
+      console.log('🔍 Pas de features disponibles');
       return { type: 'FeatureCollection', features: [] };
     }
 
-    let features = equipments.features;
-    
-    if (activeFilters.length > 0) {
+    console.log('🔍 Filtrage de', equipmentsFeatures.length, 'équipements');
+
+    let features = [...equipmentsFeatures]; // ✅ COPIE POUR ÉVITER MUTATIONS
+
+    // ✅ FILTRAGE PAR SPORTS AVEC GESTION D'ERREUR
+    if (activeFiltersStable.length > 0) {
       features = features.filter(feature => {
-        const sportsProperty = feature.properties.sports;
-        let equipmentSports = [];
-        
-        if (Array.isArray(sportsProperty)) {
-          equipmentSports = sportsProperty;
-        } else if (typeof sportsProperty === 'string') {
-          const formattedSports = formatSports(sportsProperty);
-          if (formattedSports === 'Non spécifié') {
+        try {
+          const sportsProperty = feature?.properties?.sports;
+          if (!sportsProperty) return false;
+          
+          let equipmentSports = [];
+          
+          if (Array.isArray(sportsProperty)) {
+            equipmentSports = sportsProperty;
+          } else if (typeof sportsProperty === 'string') {
+            const formattedSports = formatSports(sportsProperty);
+            if (formattedSports === 'Non spécifié') {
+              return false;
+            }
+            equipmentSports = formattedSports.split(', ').map(s => s.trim());
+          } else {
             return false;
           }
-          equipmentSports = formattedSports.split(', ').map(s => s.trim());
-        } else {
+          
+          return activeFiltersStable.some(filter => 
+            equipmentSports.some(sport => {
+              const sportLower = sport.toLowerCase();
+              const filterLower = filter.toLowerCase();
+              return sportLower.includes(filterLower) || filterLower.includes(sportLower);
+            })
+          );
+        } catch (error) {
+          console.error('Erreur filtrage sport:', error);
           return false;
         }
-        
-        const hasMatch = activeFilters.some(filter => 
-          equipmentSports.some(sport => {
-            const sportLower = sport.toLowerCase();
-            const filterLower = filter.toLowerCase();
-            return sportLower.includes(filterLower) || filterLower.includes(sportLower);
-          })
-        );
-        
-        return hasMatch;
       });
     }
 
+    // ✅ FILTRAGE ACCÈS LIBRE
     if (showFreeAccessOnly) {
       features = features.filter(feature => {
-        const freeAccess = feature.properties.free_access;
-        return freeAccess === true || freeAccess === 'true' || freeAccess === 'Oui';
+        try {
+          const freeAccess = feature?.properties?.free_access;
+          return freeAccess === true || freeAccess === 'true' || freeAccess === 'Oui';
+        } catch (error) {
+          console.error('Erreur filtrage accès libre:', error);
+          return false;
+        }
       });
     }
 
+    // ✅ FILTRAGE ACCÈS HANDICAPÉ
     if (showHandicapAccessOnly) {
       features = features.filter(feature => {
-        const handicapAccess = feature.properties.inst_acc_handi_bool;
-        return handicapAccess === true;
+        try {
+          const handicapAccess = feature?.properties?.inst_acc_handi_bool;
+          return handicapAccess === true;
+        } catch (error) {
+          console.error('Erreur filtrage handicap:', error);
+          return false;
+        }
       });
     }
+
+    console.log('🔍 Équipements filtrés:', features.length);
 
     return {
       type: 'FeatureCollection',
       features: features
     };
-  }, [equipments, activeFilters, showFreeAccessOnly, showHandicapAccessOnly]);
+  }, [
+    equipmentsFeatures,
+    activeFiltersStable,
+    showFreeAccessOnly,
+    showHandicapAccessOnly
+  ]);
 
   // ✅ MÉMORISER handleSuggestionClick
   const handleSuggestionClick = useCallback((suggestion) => {
@@ -390,13 +436,13 @@ export default function MapView() {
   // Débouncer la recherche
   const debouncedSearch = useCallback(
     debounce((searchTerm) => {
-      // Logique de recherche
+      handleSearch(searchTerm);
     }, 300),
-    []
+    [sports]
   );
 
   const handleSearch = (searchTerm) => {
-    if (!searchTerm) {
+    if (!searchTerm || !sports) {
       setSearchSuggestions([]);
       return;
     }
