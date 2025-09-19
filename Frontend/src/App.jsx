@@ -6,18 +6,22 @@ import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import { ROUTES } from './constants/routes';
 
-// Lazy load des composants lourds
+// ✅ LAZY LOAD TOUS LES COMPOSANTS DE PAGES
 const MapView = lazy(() => import('./components/Map/MapView'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const HomePage = lazy(() => import('./pages/HomePage'));
 const SportsPage = lazy(() => import('./pages/SportsPage'));
 const ReportPage = lazy(() => import('./pages/ReportPage'));
+const ReportSuccessPage = lazy(() => import('./pages/ReportSuccessPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const AuthPage = lazy(() => import('./pages/AuthPage'));
 const VerificationPage = lazy(() => import('./pages/VerificationPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
-const ReportSuccessPage = lazy(() => import('./pages/ReportSuccessPage'));
+
+// ✅ AJOUTER CES IMPORTS LAZY
+const LoginForm = lazy(() => import('./components/auth/LoginForm'));
+const RegisterForm = lazy(() => import('./components/auth/RegisterForm'));
 
 // Composant de loading
 const PageLoader = () => (
