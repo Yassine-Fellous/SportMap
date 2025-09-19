@@ -20,15 +20,35 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
+          // Séparer les gros packages
           vendor: ['react', 'react-dom'],
-          mapbox: ['mapbox-gl'],
+          mapbox: ['mapbox-gl', 'react-map-gl'],
+          ui: ['framer-motion', 'lucide-react'],
           router: ['react-router-dom']
+        },
+        // Optimiser les noms de fichiers
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.name.split('.');
+          const ext = info[info.length - 1];
+          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
+            return `images/[name]-[hash][extname]`;
+          }
+          return `assets/[name]-[hash][extname]`;
         }
+      }
+    },
+    // Compression
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
       }
     }
   },
+  // Optimisations dev
   server: {
-    host: '0.0.0.0',
-    port: process.env.PORT || 5173
+    fs: {
+      strict: false
+    }
   }
 })

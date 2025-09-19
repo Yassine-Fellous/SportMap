@@ -15,6 +15,38 @@
   font-family: 'Rubik', system-ui, sans-serif;
 }
 
+/* Frontend/src/index.css */
+
+/* Optimisation critiques */
+* {
+  box-sizing: border-box;
+}
+
+/* Éviter les reflows */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Optimiser les animations */
+.smooth-transition {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  will-change: transform, opacity;
+}
+
+/* Optimiser le scrolling */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* GPU acceleration pour les éléments animés */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
 .mapboxgl-map {
   font-family: 'Rubik', system-ui, sans-serif !important;
 }

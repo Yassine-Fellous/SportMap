@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
 import Navigation from './layouts/Navigation';
@@ -6,24 +6,25 @@ import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import { ROUTES } from './constants/routes';
 
-// Import centralisé des pages
-import {
-  HomePage,
-  AboutPage,
-  SportsPage,
-  ReportPage,
-  DashboardPage,
-  AuthPage,
-  VerificationPage,
-  ForgotPasswordPage,
-  ResetPasswordPage
-} from './pages';
+// Lazy load des composants lourds
+const MapView = lazy(() => import('./components/Map/MapView'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const HomePage = lazy(() => import('./pages/HomePage'));
+const SportsPage = lazy(() => import('./pages/SportsPage'));
+const ReportPage = lazy(() => import('./pages/ReportPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const AuthPage = lazy(() => import('./pages/AuthPage'));
+const VerificationPage = lazy(() => import('./pages/VerificationPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const ReportSuccessPage = lazy(() => import('./pages/ReportSuccessPage'));
 
-// Import des composants Map et Auth
-import MapView from './components/Map/MapView';
-import LoginForm from './components/auth/LoginForm';
-import RegisterForm from './components/auth/RegisterForm';
-import ReportSuccessPage from './pages/ReportSuccessPage';
+// Composant de loading
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  </div>
+);
 
 // Styles
 import './App.css';
@@ -33,42 +34,44 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <ScrollToTop />
-        <Routes>
-          {/* Route spéciale pour la carte SANS navigation */}
-          <Route 
-            path={ROUTES.MAP} 
-            element={
-              <div style={{ height: '100vh', overflow: 'hidden' }}>
-                {/* ✅ SUPPRIMER LA NAVIGATION SUR LA PAGE CARTE */}
-                <MapView />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Route spéciale pour la carte SANS navigation */}
+            <Route 
+              path={ROUTES.MAP} 
+              element={
+                <div style={{ height: '100vh', overflow: 'hidden' }}>
+                  {/* ✅ SUPPRIMER LA NAVIGATION SUR LA PAGE CARTE */}
+                  <MapView />
+                </div>
+              } 
+            />
+            
+            {/* Toutes les autres routes avec layout normal */}
+            <Route path="/*" element={
+              <div className="min-h-screen flex flex-col">
+                <Navigation />
+                <main className="flex-grow">
+                  <Routes>
+                    <Route path={ROUTES.HOME} element={<HomePage />} />
+                    <Route path={ROUTES.ABOUT} element={<AboutPage />} />
+                    <Route path={ROUTES.SPORTS} element={<SportsPage />} />
+                    <Route path={ROUTES.REPORT} element={<ReportPage />} />
+                    <Route path={ROUTES.REPORT_SUCCESS} element={<ReportSuccessPage />} />
+                    <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+                    <Route path={ROUTES.LOGIN} element={<LoginForm />} />
+                    <Route path={ROUTES.REGISTER} element={<RegisterForm />} />
+                    <Route path={ROUTES.VERIFICATION} element={<VerificationPage />} />
+                    <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+                    <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
+                    <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
+                  </Routes>
+                </main>
+                <Footer />
               </div>
-            } 
-          />
-          
-          {/* Toutes les autres routes avec layout normal */}
-          <Route path="/*" element={
-            <div className="min-h-screen flex flex-col">
-              <Navigation />
-              <main className="flex-grow">
-                <Routes>
-                  <Route path={ROUTES.HOME} element={<HomePage />} />
-                  <Route path={ROUTES.ABOUT} element={<AboutPage />} />
-                  <Route path={ROUTES.SPORTS} element={<SportsPage />} />
-                  <Route path={ROUTES.REPORT} element={<ReportPage />} />
-                  <Route path={ROUTES.REPORT_SUCCESS} element={<ReportSuccessPage />} />
-                  <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
-                  <Route path={ROUTES.LOGIN} element={<LoginForm />} />
-                  <Route path={ROUTES.REGISTER} element={<RegisterForm />} />
-                  <Route path={ROUTES.VERIFICATION} element={<VerificationPage />} />
-                  <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
-                  <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
-                  <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
-                </Routes>
-              </main>
-              <Footer />
-            </div>
-          } />
-        </Routes>
+            } />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );

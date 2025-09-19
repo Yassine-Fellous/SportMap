@@ -22,6 +22,7 @@ import { formatSports } from '@/utils/formatSports';
 
 // Styles
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { debounce } from 'lodash';
 
 export default function MapView() {
   // ✅ GESTION D'ERREUR POUR ÉVITER LES CRASHES
@@ -365,6 +366,35 @@ export default function MapView() {
     }
   };
 
+  // Mémoriser les styles de carte
+  const mapStyle = useMemo(() => ({
+    width: '100vw',
+    height: '100vh'
+  }), []);
+
+  // Optimiser les filtres
+  const memoizedEquipments = useMemo(() => {
+    if (!equipments) return [];
+    
+    return equipments.filter(equipment => {
+      // Filtrage optimisé
+      if (activeFilters.length > 0) {
+        return activeFilters.some(filter => 
+          equipment.properties.sports?.includes(filter)
+        );
+      }
+      return true;
+    });
+  }, [equipments, activeFilters]);
+
+  // Débouncer la recherche
+  const debouncedSearch = useCallback(
+    debounce((searchTerm) => {
+      // Logique de recherche
+    }, 300),
+    []
+  );
+
   const handleSearch = (searchTerm) => {
     if (!searchTerm) {
       setSearchSuggestions([]);
@@ -565,6 +595,10 @@ export default function MapView() {
         onClick={onClick}
         onLoad={onMapLoad}
         onError={(e) => console.error('Map style loading error:', e)}
+        // Optimisations Mapbox
+        preserveDrawingBuffer={false}
+        antialias={false}
+        renderWorldCopies={false}
       >
         {/* SearchBar */}
         <div style={{ 
