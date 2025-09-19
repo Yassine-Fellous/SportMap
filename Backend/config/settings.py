@@ -44,6 +44,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://cdafrontend-production.up.railway.app",
+    "https://sportmap.me",
 ]
 
 CORS_ALLOW_HEADERS = [
