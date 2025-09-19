@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  sport-map-api:
+    build: .
+    ports:
+      - "1335:80"
+    environment:
+      - DATABASE_URL=postgresql://sportadmin:${DB_PASSWORD}@db:5432/sport
+    depends_on:
+      - db
+    command: > #ajouts de la commande "python manage.py load_csv data/filtered-data-es.csv;" car probleme d'override la commande CMD du dockerfile ne s'exécutant pas
+      sh -c "until pg_isready -h db -p 5432 -U sportadmin; do
+           echo 'Waiting for PostgreSQL...'; sleep 1;
+         done;
+         python manage.py makemigrations installations;
+         python manage.py migrate;
+         python manage.py load_csv data/filtered-data-es.csv; 
+         python manage.py runserver 0.0.0.0:80"
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=sportadmin
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=sport
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+       # 🎨 Interface pgAdmin
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+
+volumes:
+  postgres_data:

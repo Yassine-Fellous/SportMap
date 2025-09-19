@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Rubik', system-ui, sans-serif;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Rubik', system-ui, sans-serif;
+}
+
+.mapboxgl-map {
+  font-family: 'Rubik', system-ui, sans-serif !important;
+}
+
+/* ✅ CORRIGER user-select SANS SUPPRIMER LES POINTS */
+.mapboxgl-popup * {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* ✅ SUPPRIMER LES WARNINGS WebGL SANS AFFECTER LES POINTS */
+.mapboxgl-canvas {
+  outline: none !important;
+}
+
+/* ✅ GARDER SEULEMENT LES STYLES BODY ESSENTIELS */
+body {
+  line-height: 1.5;
+  font-weight: 400;
+  color: #000000; /* ✅ COULEUR NOIRE AU LIEU DE BLANC */
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  /* ✅ SUPPRIMER display: flex et place-items qui cassent le layout */
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+}
+
+/* Ligne ~50, ajouter à la fin du fichier : */
+
+/* ✅ DÉSACTIVER LE SCROLL SUR LA PAGE CARTE */
+.map-page {
+  overflow: hidden !important;
+  height: 100vh !important;
+  width: 100vw !important;
+}
+
+.map-page body {
+  overflow: hidden !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ✅ EMPÊCHER LE SCROLL HORIZONTAL ET VERTICAL */
+html, body {
+  overflow-x: hidden;
+}
+
+/* ✅ STYLES SPÉCIFIQUES POUR LA PAGE CARTE */
+.no-scroll {
+  overflow: hidden !important;
+  height: 100vh !important;
+  width: 100vw !important;
+}
+
+/* ✅ MASQUER LES BARRES DE DÉFILEMENT */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+/* ✅ POUR FIREFOX */
+html {
+  scrollbar-width: none;
+}

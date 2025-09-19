@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+dist
+.git
+.gitignore
+README.md
+coverage
+.nyc_output
+.cache
+.parcel-cache
+.next
+.nuxt
+.vuepress/dist
+.serverless
+.DS_Store
+Thumbs.db

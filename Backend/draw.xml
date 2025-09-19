@@ -1,0 +1,46 @@
+<mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    
+    <!-- Frontend Layer -->
+    <mxCell id="frontend" value="🌐 FRONTEND LAYER" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;" vertex="1" parent="1">
+      <mxGeometry x="40" y="40" width="720" height="80" as="geometry"/>
+    </mxCell>
+    
+    <!-- React/Vue -->
+    <mxCell id="react" value="React/Vue&#xa;Port: 5173" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bbdefb;" vertex="1" parent="1">
+      <mxGeometry x="80" y="60" width="120" height="40" as="geometry"/>
+    </mxCell>
+    
+    <!-- Mobile App -->
+    <mxCell id="mobile" value="Mobile App&#xa;(Future)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bbdefb;" vertex="1" parent="1">
+      <mxGeometry x="240" y="60" width="120" height="40" as="geometry"/>
+    </mxCell>
+    
+    <!-- Django Admin -->
+    <mxCell id="admin" value="Django Admin&#xa;Panel" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bbdefb;" vertex="1" parent="1">
+      <mxGeometry x="400" y="60" width="120" height="40" as="geometry"/>
+    </mxCell>
+    
+    <!-- Middleware Layer -->
+    <mxCell id="middleware" value="🔄 MIDDLEWARE LAYER" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3e0;" vertex="1" parent="1">
+      <mxGeometry x="40" y="160" width="720" height="80" as="geometry"/>
+    </mxCell>
+    
+    <!-- API Layer -->
+    <mxCell id="api" value="🔧 DJANGO API LAYER" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;" vertex="1" parent="1">
+      <mxGeometry x="40" y="280" width="720" height="100" as="geometry"/>
+    </mxCell>
+    
+    <!-- Data Layer -->
+    <mxCell id="data" value="💾 DATA LAYER" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4ec;" vertex="1" parent="1">
+      <mxGeometry x="40" y="420" width="720" height="80" as="geometry"/>
+    </mxCell>
+    
+    <!-- External Services -->
+    <mxCell id="external" value="📧 EXTERNAL SERVICES" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e8;" vertex="1" parent="1">
+      <mxGeometry x="40" y="540" width="720" height="80" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>
