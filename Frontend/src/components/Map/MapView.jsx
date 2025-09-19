@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Map, { Source, Layer } from 'react-map-gl';
 import { ToggleLeft, ToggleRight, Filter } from 'lucide-react';
@@ -23,7 +23,7 @@ import { formatSports } from '@/utils/formatSports';
 // Styles
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-// ✅ FONCTION DEBOUNCE SIMPLE AU LIEU DE LODASH
+// ✅ FONCTION DEBOUNCE SIMPLE
 const debounce = (func, delay) => {
   let timeoutId;
   return (...args) => {
@@ -33,7 +33,12 @@ const debounce = (func, delay) => {
 };
 
 export default function MapView() {
-  // ✅ GESTION D'ERREUR POUR ÉVITER LES CRASHES
+  // ✅ REFS POUR STABILISER LES VALEURS
+  const filtersRef = useRef([]);
+  const freeAccessRef = useRef(false);
+  const handicapAccessRef = useRef(false);
+
+  // ✅ GESTION D'ERREUR
   const [hasError, setHasError] = useState(false);
   
   useEffect(() => {
@@ -84,7 +89,7 @@ export default function MapView() {
   const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
   const [styleLoaded, setStyleLoaded] = useState(false);
   
-  // ✅ HOOKS - VÉRIFIER QUE CES VALEURS SONT STABLES
+  // ✅ HOOKS
   const { equipments, errorEquipments, loadingEquipments } = useEquipments();
   const { sports, errorSports, loadingSports } = useSports();
   
@@ -100,29 +105,23 @@ export default function MapView() {
   const [showNavigation, setShowNavigation] = useState(false);
   const [showUnifiedPopup, setShowUnifiedPopup] = useState(false);
 
-  // ✅ STABILISER LES DÉPENDANCES POUR ÉVITER L'ERREUR #310
-  const equipmentsFeatures = useMemo(() => {
-    return equipments?.features || [];
-  }, [equipments?.features]);
+  // ✅ MISE À JOUR DES REFS
+  useEffect(() => {
+    filtersRef.current = activeFilters;
+    freeAccessRef.current = showFreeAccessOnly;
+    handicapAccessRef.current = showHandicapAccessOnly;
+  }, [activeFilters, showFreeAccessOnly, showHandicapAccessOnly]);
 
-  const activeFiltersStable = useMemo(() => {
-    return [...activeFilters];
-  }, [activeFilters.join(',')]);
-
-  // ✅ FILTRAGE OPTIMISÉ ET SÉCURISÉ
+  // ✅ FILTRAGE AVEC REFS STABLES
   const filteredEquipments = useMemo(() => {
-    // ✅ VÉRIFICATION DÉFENSIVE
-    if (!equipmentsFeatures || !Array.isArray(equipmentsFeatures)) {
-      console.log('🔍 Pas de features disponibles');
+    if (!equipments?.features || !Array.isArray(equipments.features)) {
       return { type: 'FeatureCollection', features: [] };
     }
 
-    console.log('🔍 Filtrage de', equipmentsFeatures.length, 'équipements');
+    let features = [...equipments.features];
 
-    let features = [...equipmentsFeatures]; // ✅ COPIE POUR ÉVITER MUTATIONS
-
-    // ✅ FILTRAGE PAR SPORTS AVEC GESTION D'ERREUR
-    if (activeFiltersStable.length > 0) {
+    // Filtrage par sports
+    if (filtersRef.current.length > 0) {
       features = features.filter(feature => {
         try {
           const sportsProperty = feature?.properties?.sports;
@@ -134,15 +133,13 @@ export default function MapView() {
             equipmentSports = sportsProperty;
           } else if (typeof sportsProperty === 'string') {
             const formattedSports = formatSports(sportsProperty);
-            if (formattedSports === 'Non spécifié') {
-              return false;
-            }
+            if (formattedSports === 'Non spécifié') return false;
             equipmentSports = formattedSports.split(', ').map(s => s.trim());
           } else {
             return false;
           }
           
-          return activeFiltersStable.some(filter => 
+          return filtersRef.current.some(filter => 
             equipmentSports.some(sport => {
               const sportLower = sport.toLowerCase();
               const filterLower = filter.toLowerCase();
@@ -156,46 +153,37 @@ export default function MapView() {
       });
     }
 
-    // ✅ FILTRAGE ACCÈS LIBRE
-    if (showFreeAccessOnly) {
+    // Filtrage accès libre
+    if (freeAccessRef.current) {
       features = features.filter(feature => {
         try {
           const freeAccess = feature?.properties?.free_access;
           return freeAccess === true || freeAccess === 'true' || freeAccess === 'Oui';
         } catch (error) {
-          console.error('Erreur filtrage accès libre:', error);
           return false;
         }
       });
     }
 
-    // ✅ FILTRAGE ACCÈS HANDICAPÉ
-    if (showHandicapAccessOnly) {
+    // Filtrage accès handicapé
+    if (handicapAccessRef.current) {
       features = features.filter(feature => {
         try {
           const handicapAccess = feature?.properties?.inst_acc_handi_bool;
           return handicapAccess === true;
         } catch (error) {
-          console.error('Erreur filtrage handicap:', error);
           return false;
         }
       });
     }
 
-    console.log('🔍 Équipements filtrés:', features.length);
-
     return {
       type: 'FeatureCollection',
       features: features
     };
-  }, [
-    equipmentsFeatures,
-    activeFiltersStable,
-    showFreeAccessOnly,
-    showHandicapAccessOnly
-  ]);
+  }, [equipments]); // ✅ SEULE DÉPENDANCE STABLE
 
-  // ✅ MÉMORISER handleSuggestionClick
+  // ✅ CALLBACKS STABLES
   const handleSuggestionClick = useCallback((suggestion) => {
     console.log('🔍 Ajout du sport:', suggestion);
     
@@ -204,39 +192,61 @@ export default function MapView() {
     setPopupInfoEquipment(null);
     setShowNavigation(false);
     
-    if (!activeFilters.includes(suggestion)) {
-      const newFilters = [...activeFilters, suggestion];
-      setActiveFilters(newFilters);
-      
-      const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.set('sports', newFilters.join(','));
-      newSearchParams.delete('sport');
-      setSearchParams(newSearchParams, { replace: true });
-    }
+    setActiveFilters(current => {
+      if (!current.includes(suggestion)) {
+        const newFilters = [...current, suggestion];
+        
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.set('sports', newFilters.join(','));
+        newSearchParams.delete('sport');
+        setSearchParams(newSearchParams, { replace: true });
+        
+        return newFilters;
+      }
+      return current;
+    });
     
     setSearchSuggestions([]);
-  }, [activeFilters, searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams]);
 
-  // ✅ MÉMORISER handleRemoveFilter
   const handleRemoveFilter = useCallback((filterToRemove) => {
     console.log('🗑️ Suppression du filtre:', filterToRemove);
     
-    const newFilters = activeFilters.filter(filter => filter !== filterToRemove);
-    setActiveFilters(newFilters);
-    
-    const newSearchParams = new URLSearchParams(searchParams);
-    
-    if (newFilters.length > 0) {
-      newSearchParams.set('sports', newFilters.join(','));
-    } else {
-      newSearchParams.delete('sports');
-      newSearchParams.delete('sport');
-    }
-    
-    setSearchParams(newSearchParams, { replace: true });
-  }, [activeFilters, searchParams, setSearchParams]);
+    setActiveFilters(current => {
+      const newFilters = current.filter(filter => filter !== filterToRemove);
+      
+      const newSearchParams = new URLSearchParams(searchParams);
+      if (newFilters.length > 0) {
+        newSearchParams.set('sports', newFilters.join(','));
+      } else {
+        newSearchParams.delete('sports');
+        newSearchParams.delete('sport');
+      }
+      setSearchParams(newSearchParams, { replace: true });
+      
+      return newFilters;
+    });
+  }, [searchParams, setSearchParams]);
 
-  // ✅ USEEFFECT SIMPLIFIÉ POUR LES PARAMÈTRES URL
+  // ✅ SEARCH HANDLER STABLE
+  const handleSearch = useCallback((searchTerm) => {
+    if (!searchTerm || !sports) {
+      setSearchSuggestions([]);
+      return;
+    }
+    if (searchTerm.length < 2) {
+      setSearchSuggestions([]);
+      return;
+    }
+
+    const normalizedSearchTerm = searchTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const suggestions = sports.filter(sport =>
+      sport.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(normalizedSearchTerm)
+    );
+    setSearchSuggestions(suggestions);
+  }, [sports]);
+
+  // ✅ URL PARAMS HANDLER
   useEffect(() => {
     const sportParam = searchParams.get('sport');
     const sportsParam = searchParams.get('sports');
@@ -249,28 +259,16 @@ export default function MapView() {
       sportsToFilter = [sportParam.trim()];
     }
     
-    // ✅ COMPARAISON SIMPLE
-    const currentFiltersString = [...activeFilters].sort().join(',');
-    const newFiltersString = [...sportsToFilter].sort().join(',');
-    
-    if (sportsToFilter.length > 0 && sports && currentFiltersString !== newFiltersString) {
+    if (sportsToFilter.length > 0 && sports) {
       const validSports = sportsToFilter.filter(sport => sports.includes(sport));
-      
       if (validSports.length > 0) {
         setActiveFilters(validSports);
-        
-        if (sportParam && !sportsParam) {
-          const newSearchParams = new URLSearchParams(searchParams);
-          newSearchParams.delete('sport');
-          newSearchParams.set('sports', validSports.join(','));
-          setSearchParams(newSearchParams, { replace: true });
-        }
       }
-    } else if (sportsToFilter.length === 0 && activeFilters.length > 0) {
+    } else if (sportsToFilter.length === 0) {
       setActiveFilters([]);
     }
 
-    // Handle URL parameters for shared equipment
+    // Handle shared equipment
     const equipmentId = searchParams.get('equipmentId');
     const lat = searchParams.get('lat');
     const lng = searchParams.get('lng');
@@ -296,9 +294,9 @@ export default function MapView() {
         }));
       }
     }
-  }, [searchParams, sports, equipments]); // ✅ RETIRER activeFilters DES DÉPENDANCES
+  }, [searchParams, sports, equipments]);
 
-  // ✅ USEEFFECT POUR ESCAPE
+  // ✅ ESCAPE KEY HANDLER
   useEffect(() => {
     const handleEscapeKey = (event) => {
       if (event.key === 'Escape') {
@@ -312,41 +310,10 @@ export default function MapView() {
     };
 
     document.addEventListener('keydown', handleEscapeKey);
-    
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
+    return () => document.removeEventListener('keydown', handleEscapeKey);
   }, []);
 
-  // ✅ USEEFFECT POUR LES STYLES CSS
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      .sports-scroll::-webkit-scrollbar {
-        width: 6px;
-      }
-      
-      .sports-scroll::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-radius: 3px;
-      }
-      
-      .sports-scroll::-webkit-scrollbar-thumb {
-        background: #cbd5e0;
-        border-radius: 3px;
-      }
-      
-      .sports-scroll::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-      }
-    `;
-    document.head.appendChild(style);
-    
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
-
+  // ✅ LOADING STATES
   if (errorEquipments) {
     return <div>Error loading map data</div>;
   }
@@ -355,14 +322,13 @@ export default function MapView() {
     return <LoadingSpinner />;
   }
 
-  const onClick = (event) => {
+  // ✅ CLICK HANDLER
+  const onClick = useCallback((event) => {
     const feature = event.features?.[0];
     if (feature && feature.layer.id === 'unclustered-point') {
       const equipmentId = feature.properties?.id || feature.id;
       const longitude = feature.geometry.coordinates[0];
       const latitude = feature.geometry.coordinates[1];
-      
-      console.log('🎯 Clic équipement:', { equipmentId, longitude, latitude });
       
       setShowFiltersPopup(false);
       setShowSportsPopup(false);
@@ -372,13 +338,7 @@ export default function MapView() {
       const isDesktop = window.innerWidth >= 1024;
       
       if (!isDesktop) {
-        let offset;
-        if (window.innerWidth <= 768) {
-          offset = 0.004;
-        } else {
-          offset = 0.015;
-        }
-        
+        const offset = window.innerWidth <= 768 ? 0.004 : 0.015;
         setViewState(prevState => ({
           ...prevState,
           longitude: longitude,
@@ -410,56 +370,10 @@ export default function MapView() {
       setShowMenu(false);
       setShowNavigation(false);
     }
-  };
+  }, []);
 
-  // Mémoriser les styles de carte
-  const mapStyle = useMemo(() => ({
-    width: '100vw',
-    height: '100vh'
-  }), []);
-
-  // Optimiser les filtres
-  const memoizedEquipments = useMemo(() => {
-    if (!equipments) return [];
-    
-    return equipments.filter(equipment => {
-      // Filtrage optimisé
-      if (activeFilters.length > 0) {
-        return activeFilters.some(filter => 
-          equipment.properties.sports?.includes(filter)
-        );
-      }
-      return true;
-    });
-  }, [equipments, activeFilters]);
-
-  // Débouncer la recherche
-  const debouncedSearch = useCallback(
-    debounce((searchTerm) => {
-      handleSearch(searchTerm);
-    }, 300),
-    [sports]
-  );
-
-  const handleSearch = (searchTerm) => {
-    if (!searchTerm || !sports) {
-      setSearchSuggestions([]);
-      return;
-    }
-    if (searchTerm.length < 2) {
-      setSearchSuggestions([]);
-      return;
-    }
-
-    const normalizedSearchTerm = searchTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-    const suggestions = sports.filter(sport =>
-      sport.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(normalizedSearchTerm)
-    );
-    setSearchSuggestions(suggestions);
-  };
-
-  const onMapLoad = (event) => {
+  // ✅ MAP LOAD HANDLER
+  const onMapLoad = useCallback((event) => {
     const map = event.target;
     setStyleLoaded(true);
     
@@ -470,7 +384,6 @@ export default function MapView() {
       }
       if (!map.hasImage('map-pin')) {
         map.addImage('map-pin', image);
-        console.log('✅ map-pin chargé');
       }
     });
 
@@ -481,12 +394,12 @@ export default function MapView() {
       }
       if (!map.hasImage('map-pin-active')) {
         map.addImage('map-pin-active', image);
-        console.log('✅ map-pin-active chargé');
       }
     });
-  };
+  }, []);
 
-  const getUnclusteredPointLayer = () => {
+  // ✅ LAYER STABLE
+  const getUnclusteredPointLayer = useCallback(() => {
     const selectedId = popupInfoEquipment?.properties?.id || popupInfoEquipment?.id;
     
     return {
@@ -507,8 +420,9 @@ export default function MapView() {
         ]
       }
     };
-  };
+  }, [popupInfoEquipment?.properties?.id, popupInfoEquipment?.id]);
 
+  // ✅ RENDER JSX - CONSERVER VOTRE CODE EXISTANT POUR L'UI
   return (
     <div style={{ 
       position: 'relative', 
@@ -674,7 +588,7 @@ export default function MapView() {
           >
             <Layer {...clusterLayer} />
             <Layer {...clusterCountLayer} />
-            <Layer {...getUnclusteredPointLayer()} key={popupInfoEquipment?.properties?.id || 'default'} />
+            <Layer {...getUnclusteredPointLayer()} />
             <Layer {...sportIconLayer} />
           </Source>
         )}
