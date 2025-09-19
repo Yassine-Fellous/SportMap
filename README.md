@@ -88,7 +88,7 @@ cd SportMap
 docker-compose up --build
 
 # L'application sera disponible sur :
-# Frontend: http://localhost:3000
+# Frontend: http://localhost:5173
 # Backend: http://localhost:8000
 ```
 

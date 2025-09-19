@@ -82,7 +82,7 @@ start_dev_environment() {
     print_success "✅ Environnement de développement démarré avec succès!"
     echo ""
     print_message "🌐 Services disponibles:"
-    echo "   • Frontend (React):     http://localhost:3000"
+    echo "   • Frontend (React):     http://localhost:5173"
     echo "   • Backend (Django API): http://localhost:8000"
     echo "   • Adminer (DB Admin):   http://localhost:8080"
     echo "   • Base de données:      localhost:5433"

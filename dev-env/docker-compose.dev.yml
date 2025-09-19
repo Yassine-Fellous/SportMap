@@ -64,13 +64,13 @@ services:
       - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
       - NODE_ENV=development
     ports:
-      - "3000:3000"
+      - "5173:5173"
     volumes:
       - ../Frontend:/app
       - /app/node_modules  # Volume anonyme pour node_modules
     depends_on:
       - backend
-    command: npm run dev -- --host 0.0.0.0 --port 3000
+    command: npm run dev -- --host 0.0.0.0 --port 5173
 
   # Interface pgAdmin pour gérer la base de données
   adminer:

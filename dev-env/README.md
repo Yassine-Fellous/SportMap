@@ -34,7 +34,7 @@ cp .env.example .env
 ### 3. Accès aux services
 Une fois démarré, les services sont disponibles sur :
 
-- **🌐 Frontend (React)** : http://localhost:3000
+- **🌐 Frontend (React)** : http://localhost:5173
 - **🔌 Backend (Django API)** : http://localhost:8000
 - **🗄️ Adminer (Gestion DB)** : http://localhost:8080
 - **📊 Base de données** : localhost:5433
