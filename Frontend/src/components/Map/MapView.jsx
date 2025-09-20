@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Map, { Source, Layer } from 'react-map-gl';
-import { ToggleLeft, ToggleRight, Filter } from 'lucide-react';
+import { Filter } from 'lucide-react';
 
 // Constants
 import { MAPBOX_TOKEN, INITIAL_VIEW_STATE } from '@/constants/mapConfig';
@@ -23,67 +23,19 @@ import { formatSports } from '@/utils/formatSports';
 // Styles
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-// ✅ FONCTION DEBOUNCE SIMPLE
-const debounce = (func, delay) => {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
-  };
-};
-
 export default function MapView() {
   // ✅ REFS POUR STABILISER LES VALEURS
   const filtersRef = useRef([]);
   const freeAccessRef = useRef(false);
   const handicapAccessRef = useRef(false);
-
-  // ✅ GESTION D'ERREUR
-  const [hasError, setHasError] = useState(false);
   
-  useEffect(() => {
-    const handleError = (error) => {
-      console.error('❌ Erreur dans MapView:', error);
-      setHasError(true);
-    };
-    
-    window.addEventListener('error', handleError);
-    window.addEventListener('unhandledrejection', handleError);
-    
-    return () => {
-      window.removeEventListener('error', handleError);
-      window.removeEventListener('unhandledrejection', handleError);
-    };
-  }, []);
+  // ✅ REFS POUR LES HANDLERS
+  const searchParamsRef = useRef();
+  const setSearchParamsRef = useRef();
+  const sportsRef = useRef();
 
-  if (hasError) {
-    return (
-      <div style={{ 
-        height: '100vh', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        flexDirection: 'column',
-        padding: '20px'
-      }}>
-        <h2>Erreur de chargement de la carte</h2>
-        <p>Veuillez rafraîchir la page</p>
-        <button 
-          onClick={() => window.location.reload()}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          Rafraîchir
-        </button>
-      </div>
-    );
-  }
+  // ✅ GESTION D'ERREUR SIMPLIFIÉE
+  const [hasError, setHasError] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
@@ -110,7 +62,10 @@ export default function MapView() {
     filtersRef.current = activeFilters;
     freeAccessRef.current = showFreeAccessOnly;
     handicapAccessRef.current = showHandicapAccessOnly;
-  }, [activeFilters, showFreeAccessOnly, showHandicapAccessOnly]);
+    searchParamsRef.current = searchParams;
+    setSearchParamsRef.current = setSearchParams;
+    sportsRef.current = sports;
+  }, [activeFilters, showFreeAccessOnly, showHandicapAccessOnly, searchParams, setSearchParams, sports]);
 
   // ✅ FILTRAGE AVEC REFS STABLES
   const filteredEquipments = useMemo(() => {
@@ -183,8 +138,8 @@ export default function MapView() {
     };
   }, [equipments]); // ✅ SEULE DÉPENDANCE STABLE
 
-  // ✅ CALLBACKS STABLES
-  const handleSuggestionClick = useCallback((suggestion) => {
+  // ✅ HANDLERS SANS useCallback - FONCTIONS SIMPLES
+  const handleSuggestionClick = (suggestion) => {
     console.log('🔍 Ajout du sport:', suggestion);
     
     setShowFiltersPopup(false);
@@ -192,45 +147,38 @@ export default function MapView() {
     setPopupInfoEquipment(null);
     setShowNavigation(false);
     
-    setActiveFilters(current => {
-      if (!current.includes(suggestion)) {
-        const newFilters = [...current, suggestion];
-        
-        const newSearchParams = new URLSearchParams(searchParams);
-        newSearchParams.set('sports', newFilters.join(','));
-        newSearchParams.delete('sport');
-        setSearchParams(newSearchParams, { replace: true });
-        
-        return newFilters;
-      }
-      return current;
-    });
+    if (!activeFilters.includes(suggestion)) {
+      const newFilters = [...activeFilters, suggestion];
+      setActiveFilters(newFilters);
+      
+      const newSearchParams = new URLSearchParams(searchParamsRef.current);
+      newSearchParams.set('sports', newFilters.join(','));
+      newSearchParams.delete('sport');
+      setSearchParamsRef.current(newSearchParams, { replace: true });
+    }
     
     setSearchSuggestions([]);
-  }, [searchParams, setSearchParams]);
+  };
 
-  const handleRemoveFilter = useCallback((filterToRemove) => {
+  const handleRemoveFilter = (filterToRemove) => {
     console.log('🗑️ Suppression du filtre:', filterToRemove);
     
-    setActiveFilters(current => {
-      const newFilters = current.filter(filter => filter !== filterToRemove);
-      
-      const newSearchParams = new URLSearchParams(searchParams);
-      if (newFilters.length > 0) {
-        newSearchParams.set('sports', newFilters.join(','));
-      } else {
-        newSearchParams.delete('sports');
-        newSearchParams.delete('sport');
-      }
-      setSearchParams(newSearchParams, { replace: true });
-      
-      return newFilters;
-    });
-  }, [searchParams, setSearchParams]);
+    const newFilters = activeFilters.filter(filter => filter !== filterToRemove);
+    setActiveFilters(newFilters);
+    
+    const newSearchParams = new URLSearchParams(searchParamsRef.current);
+    if (newFilters.length > 0) {
+      newSearchParams.set('sports', newFilters.join(','));
+    } else {
+      newSearchParams.delete('sports');
+      newSearchParams.delete('sport');
+    }
+    setSearchParamsRef.current(newSearchParams, { replace: true });
+  };
 
-  // ✅ SEARCH HANDLER STABLE
-  const handleSearch = useCallback((searchTerm) => {
-    if (!searchTerm || !sports) {
+  // ✅ SEARCH HANDLER SIMPLE
+  const handleSearch = (searchTerm) => {
+    if (!searchTerm || !sportsRef.current) {
       setSearchSuggestions([]);
       return;
     }
@@ -240,11 +188,111 @@ export default function MapView() {
     }
 
     const normalizedSearchTerm = searchTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const suggestions = sports.filter(sport =>
+    const suggestions = sportsRef.current.filter(sport =>
       sport.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(normalizedSearchTerm)
     );
     setSearchSuggestions(suggestions);
-  }, [sports]);
+  };
+
+  // ✅ CLICK HANDLER SIMPLE
+  const onClick = (event) => {
+    const feature = event.features?.[0];
+    if (feature && feature.layer.id === 'unclustered-point') {
+      const equipmentId = feature.properties?.id || feature.id;
+      const longitude = feature.geometry.coordinates[0];
+      const latitude = feature.geometry.coordinates[1];
+      
+      setShowFiltersPopup(false);
+      setShowSportsPopup(false);
+      setShowUnifiedPopup(false);
+      setShowNavigation(false);
+      
+      const isDesktop = window.innerWidth >= 1024;
+      
+      if (!isDesktop) {
+        const offset = window.innerWidth <= 768 ? 0.004 : 0.015;
+        setViewState(prevState => ({
+          ...prevState,
+          longitude: longitude,
+          latitude: latitude + offset,
+          transitionDuration: 600
+        }));
+      } else {
+        setViewState(prevState => ({
+          ...prevState,
+          longitude: longitude,
+          latitude: latitude,
+          transitionDuration: 400
+        }));
+      }
+      
+      setPopupInfoEquipment({
+        longitude: longitude,
+        latitude: latitude,
+        properties: {
+          ...feature.properties,
+          id: equipmentId
+        },
+        id: equipmentId,
+        geometry: feature.geometry
+      });
+    } else {
+      setShowUnifiedPopup(false);
+      setPopupInfoEquipment(null);
+      setShowMenu(false);
+      setShowNavigation(false);
+    }
+  };
+
+  // ✅ MAP LOAD HANDLER SIMPLE
+  const onMapLoad = (event) => {
+    const map = event.target;
+    setStyleLoaded(true);
+    
+    map.loadImage('/map-pinv9.png', (error, image) => {
+      if (error) {
+        console.error('❌ Erreur chargement /map-pinv9.png:', error);
+        return;
+      }
+      if (!map.hasImage('map-pin')) {
+        map.addImage('map-pin', image);
+      }
+    });
+
+    map.loadImage('/map-pin-active.png', (error, image) => {
+      if (error) {
+        console.error('❌ Erreur chargement /map-pin-active.png:', error);
+        return;
+      }
+      if (!map.hasImage('map-pin-active')) {
+        map.addImage('map-pin-active', image);
+      }
+    });
+  };
+
+  // ✅ LAYER AVEC useMemo AU LIEU DE useCallback
+  const unclusteredPointLayerMemo = useMemo(() => {
+    const selectedId = popupInfoEquipment?.properties?.id || popupInfoEquipment?.id;
+    
+    return {
+      ...unclusteredPointLayer,
+      layout: {
+        ...unclusteredPointLayer.layout,
+        'icon-image': [
+          'case',
+          ['==', ['get', 'id'], selectedId || ''],
+          'map-pin-active',
+          'map-pin'
+        ],
+        'icon-size': [
+          'case',
+          ['==', ['get', 'id'], selectedId || ''],
+          0.1,
+          0.3
+        ]
+      }
+    };
+  }, [popupInfoEquipment?.properties?.id, popupInfoEquipment?.id]);
 
   // ✅ URL PARAMS HANDLER
   useEffect(() => {
@@ -313,6 +361,51 @@ export default function MapView() {
     return () => document.removeEventListener('keydown', handleEscapeKey);
   }, []);
 
+  // ✅ ERROR HANDLER
+  useEffect(() => {
+    const handleError = (error) => {
+      console.error('❌ Erreur dans MapView:', error);
+      setHasError(true);
+    };
+    
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleError);
+    
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleError);
+    };
+  }, []);
+
+  if (hasError) {
+    return (
+      <div style={{ 
+        height: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        flexDirection: 'column',
+        padding: '20px'
+      }}>
+        <h2>Erreur de chargement de la carte</h2>
+        <p>Veuillez rafraîchir la page</p>
+        <button 
+          onClick={() => window.location.reload()}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          Rafraîchir
+        </button>
+      </div>
+    );
+  }
+
   // ✅ LOADING STATES
   if (errorEquipments) {
     return <div>Error loading map data</div>;
@@ -322,107 +415,7 @@ export default function MapView() {
     return <LoadingSpinner />;
   }
 
-  // ✅ CLICK HANDLER
-  const onClick = useCallback((event) => {
-    const feature = event.features?.[0];
-    if (feature && feature.layer.id === 'unclustered-point') {
-      const equipmentId = feature.properties?.id || feature.id;
-      const longitude = feature.geometry.coordinates[0];
-      const latitude = feature.geometry.coordinates[1];
-      
-      setShowFiltersPopup(false);
-      setShowSportsPopup(false);
-      setShowUnifiedPopup(false);
-      setShowNavigation(false);
-      
-      const isDesktop = window.innerWidth >= 1024;
-      
-      if (!isDesktop) {
-        const offset = window.innerWidth <= 768 ? 0.004 : 0.015;
-        setViewState(prevState => ({
-          ...prevState,
-          longitude: longitude,
-          latitude: latitude + offset,
-          transitionDuration: 600
-        }));
-      } else {
-        setViewState(prevState => ({
-          ...prevState,
-          longitude: longitude,
-          latitude: latitude,
-          transitionDuration: 400
-        }));
-      }
-      
-      setPopupInfoEquipment({
-        longitude: longitude,
-        latitude: latitude,
-        properties: {
-          ...feature.properties,
-          id: equipmentId
-        },
-        id: equipmentId,
-        geometry: feature.geometry
-      });
-    } else {
-      setShowUnifiedPopup(false);
-      setPopupInfoEquipment(null);
-      setShowMenu(false);
-      setShowNavigation(false);
-    }
-  }, []);
-
-  // ✅ MAP LOAD HANDLER
-  const onMapLoad = useCallback((event) => {
-    const map = event.target;
-    setStyleLoaded(true);
-    
-    map.loadImage('/map-pinv9.png', (error, image) => {
-      if (error) {
-        console.error('❌ Erreur chargement /map-pinv9.png:', error);
-        return;
-      }
-      if (!map.hasImage('map-pin')) {
-        map.addImage('map-pin', image);
-      }
-    });
-
-    map.loadImage('/map-pin-active.png', (error, image) => {
-      if (error) {
-        console.error('❌ Erreur chargement /map-pin-active.png:', error);
-        return;
-      }
-      if (!map.hasImage('map-pin-active')) {
-        map.addImage('map-pin-active', image);
-      }
-    });
-  }, []);
-
-  // ✅ LAYER STABLE
-  const getUnclusteredPointLayer = useCallback(() => {
-    const selectedId = popupInfoEquipment?.properties?.id || popupInfoEquipment?.id;
-    
-    return {
-      ...unclusteredPointLayer,
-      layout: {
-        ...unclusteredPointLayer.layout,
-        'icon-image': [
-          'case',
-          ['==', ['get', 'id'], selectedId || ''],
-          'map-pin-active',
-          'map-pin'
-        ],
-        'icon-size': [
-          'case',
-          ['==', ['get', 'id'], selectedId || ''],
-          0.1,
-          0.3
-        ]
-      }
-    };
-  }, [popupInfoEquipment?.properties?.id, popupInfoEquipment?.id]);
-
-  // ✅ RENDER JSX - CONSERVER VOTRE CODE EXISTANT POUR L'UI
+  // ✅ RENDER JSX - VOTRE CODE EXISTANT
   return (
     <div style={{ 
       position: 'relative', 
@@ -555,7 +548,6 @@ export default function MapView() {
         onClick={onClick}
         onLoad={onMapLoad}
         onError={(e) => console.error('Map style loading error:', e)}
-        // Optimisations Mapbox
         preserveDrawingBuffer={false}
         antialias={false}
         renderWorldCopies={false}
@@ -588,28 +580,9 @@ export default function MapView() {
           >
             <Layer {...clusterLayer} />
             <Layer {...clusterCountLayer} />
-            <Layer {...getUnclusteredPointLayer()} />
+            <Layer {...unclusteredPointLayerMemo} />
             <Layer {...sportIconLayer} />
           </Source>
-        )}
-
-        {/* Debug Info */}
-        {styleLoaded && (
-          <div style={{
-            position: 'absolute',
-            bottom: '10px',
-            right: '10px',
-            background: 'rgba(0,0,0,0.7)',
-            color: 'white',
-            padding: '10px',
-            borderRadius: '5px',
-            fontSize: '12px',
-            zIndex: 1000
-          }}>
-            Points: {filteredEquipments?.features?.length || 0}
-            <br />
-            Style: {styleLoaded ? '✅' : '❌'}
-          </div>
         )}
 
         {/* Map Popup */}
@@ -619,7 +592,7 @@ export default function MapView() {
         />
       </Map>
 
-      {/* Popup Unifiée */}
+      {/* Popup Unifiée - VOTRE CODE EXISTANT */}
       {showUnifiedPopup && (
         <div
           style={{
