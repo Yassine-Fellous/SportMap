@@ -1,6 +1,7 @@
 build:
-  context: .
-  dockerfile: Dockerfile
+  builder: DOCKERFILE
+  dockerfilePath: Dockerfile
+  dockerContext: .
 
 deploy:
   startCommand: >
@@ -12,4 +13,4 @@ deploy:
     "
   healthcheckPath: /api/v1/installations/sports/
   healthcheckTimeout: 30
-  restartPolicyType: always
+  restartPolicyType: ON_FAILURE
