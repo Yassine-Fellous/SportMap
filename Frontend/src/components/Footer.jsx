@@ -46,7 +46,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          /* Social Column */}
+          /* Social Column */
                 <div className="col-span-1">
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">Suivez-nous</h3>
                 <div className="flex space-x-4">
@@ -66,7 +66,7 @@ const Footer = () => {
                 </div>
               </div>
 
-              {/* Bottom Bar */}}
+              {/* Bottom Bar */}
         <div className="mt-8 pt-8 border-t border-gray-200">
           <p className="text-gray-400 text-sm text-center">
             2024 Marseille sport. Tous droits réservés.
