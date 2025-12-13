@@ -20,7 +20,7 @@ SportMap démocratise l'accès au sport en France en créant la première platef
 - **🔐 Authentification complète** : JWT, validation email, reset password
 - **⚡ Performances optimisées** : Cache intelligent, 98% d'amélioration des temps de réponse
 - **📱 Interface responsive** : Adaptée mobile/desktop avec géolocalisation
-- **🔍 Recherche et filtres** : Par sport, localisation parmi 168 sports différents
+- **🔍 Recherche et filtres** : Par sport, localisation parmi 168 sports différents, libre accées, PMR ♿
 
 ## 🏗️ Architecture Technique
 
@@ -171,25 +171,6 @@ npm run dev
 
 ### Format GeoJSON
 Les données sont servies au format GeoJSON optimisé pour l'affichage cartographique avec mise en cache intelligente.
-
-## 🚀 Roadmap
-
-### Phase 1: PWA ⭐ *Priorité Absolue*
-- [ ] **Configuration PWA** (manifest.json + service worker)
-- [ ] **Installation** sur écran d'accueil mobile
-- [ ] **Notifications push** basiques
-- [ ] **Cache offline** des données essentielles
-
-### Phase 2: Améliorations UX ⭐ *Priorité*
-- [ ] **Pagination dans les popups** pour équipements multiples
-- [ ] **Filtre avancé** par accessibilité, horaires
-- [ ] **Photos des équipements** upload communautaire
-- [ ] **Système de notation** et avis
-
-### Phase 3: Extension Géographique
-- [ ] **Couverture nationale** progressive
-- [ ] **Import automatisé** des données officielles
-- [ ] **API publique** pour partenaires
 
 ## 📈 Performances
 
