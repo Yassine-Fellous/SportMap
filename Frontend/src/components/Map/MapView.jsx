@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import Map, { Source, Layer } from 'react-map-gl';
-import { ToggleLeft, ToggleRight, Filter } from 'lucide-react';
+import Map, { Source, Layer, Marker } from 'react-map-gl';
+import { ToggleLeft, ToggleRight, Filter, Locate } from 'lucide-react'; // ✅ AJOUT DE LOCATE
 
 // Constants
 import { MAPBOX_TOKEN, INITIAL_VIEW_STATE } from '@/constants/mapConfig';
@@ -90,8 +90,7 @@ export default function MapView() {
   const [showMenu, setShowMenu] = useState(false);
   const [showNavigation, setShowNavigation] = useState(false);
   const [showUnifiedPopup, setShowUnifiedPopup] = useState(false);
-
-  // ✅ MÉMORISER getFilteredFeatures AVEC useMemo AU LIEU DE useCallback
+    const [userLocation, setUserLocation] = useState(null);
   const filteredEquipments = useMemo(() => {
     if (!equipments?.features) {
       return { type: 'FeatureCollection', features: [] };
@@ -410,6 +409,31 @@ export default function MapView() {
     });
   };
 
+  // ✅ FONCTION DE GÉOLOCALISATION
+  const handleGeolocate = () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { longitude, latitude } = position.coords;
+          setUserLocation({ longitude, latitude });
+          setViewState(prev => ({
+            ...prev,
+            longitude,
+            latitude,
+            zoom: 14,
+            transitionDuration: 1000
+          }));
+        },
+        (error) => {
+          console.error("Erreur de géolocalisation:", error);
+          alert("Impossible d'obtenir votre position. Veuillez vérifier les autorisations de votre navigateur.");
+        }
+      );
+    } else {
+      alert("Votre navigateur ne supporte pas la géolocalisation.");
+    }
+  };
+
   const getUnclusteredPointLayer = () => {
     const selectedId = popupInfoEquipment?.properties?.id || popupInfoEquipment?.id;
     
@@ -452,7 +476,28 @@ export default function MapView() {
         zIndex: 49,
         transition: 'top 0.3s ease',
       }}>
-        {/* Icône unifiée */}
+        {/* ✅ BOUTON DE GÉOLOCALISATION */}
+        <button
+          onClick={handleGeolocate}
+          style={{
+            backgroundColor: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '8px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            color: '#3b82f6',
+            transition: 'all 0.2s ease',
+          }}
+          title="Me localiser"
+        >
+          <Locate size={24} />
+        </button>
+
+        {/* Icône unifiée pour les filtres existants */}
         <div 
           style={{
             backgroundColor: activeFilters.length > 0 || showFreeAccessOnly || showHandicapAccessOnly ? '#3b82f6' : 'white',
@@ -619,6 +664,18 @@ export default function MapView() {
         )}
 
         {/* Map Popup */}
+        {userLocation && (
+          <Marker longitude={userLocation.longitude} latitude={userLocation.latitude} anchor="center">
+            <div style={{
+              backgroundColor: '#3b82f6',
+              width: '18px',
+              height: '18px',
+              borderRadius: '50%',
+              border: '3px solid white',
+              boxShadow: '0 0 10px rgba(59, 130, 246, 0.5)'
+            }} />
+          </Marker>
+        )}
         <MapPopup
           popupInfo={popupInfoEquipment}
           onClose={() => setPopupInfoEquipment(null)}

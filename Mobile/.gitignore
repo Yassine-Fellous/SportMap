@@ -1,0 +1,27 @@
+node_modules/
+.expo/
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+.env
+.env.*
+!.env.example
+
+# macOS
+.DS_Store
+
+# iOS/Android Build directories (if prebuild is not checking them in. Usually they are checked in for custom native code, but ignoring derived data is good)
+ios/build/
+ios/Pods/
+ios/.symlinks/
+android/app/build/
+android/.gradle/
+android/app/src/main/assets/custom/
+android/build/
+android/app/src/main/assets/

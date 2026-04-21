@@ -2,19 +2,22 @@
 
 [![Django](https://img.shields.io/badge/Django-4.2.7-092E20?style=flat&logo=django&logoColor=white)](https://djangoproject.com/)
 [![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=flat&logo=react&logoColor=black)](https://reactjs.org/)
+[![React Native](https://img.shields.io/badge/React_Native-0.74.5-61DAFB?style=flat&logo=react&logoColor=black)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-51.0-000000?style=flat&logo=expo&logoColor=white)](https://expo.dev/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?style=flat&logo=postgresql&logoColor=white)](https://postgresql.org/)
-[![Railway](https://img.shields.io/badge/Railway-Deployed-0B0D0E?style=flat&logo=railway&logoColor=white)](https://railway.app/)
 [![Performance](https://img.shields.io/badge/Performance-+340%25-00D084?style=flat)](./Backend/RAPPORT_MIGRATION.md)
 
-Une Progressive Web App (PWA) complète pour cartographier et évaluer toutes les infrastructures sportives en France de manière collaborative et interactive.
+Une cartographie complète des infrastructures sportives en France accessible sur Web (PWA) et Mobile (iOS/Android), permettant à la communauté de rechercher et signaler l'état des équipements de manière collaborative.
 
 ## 📋 Vue d'ensemble
 
 ### 🎯 Vision du Projet
-SportMap démocratise l'accès au sport en France en créant la première plateforme collaborative de cartographie des équipements sportifs. Notre mission est de connecter les sportifs aux infrastructures disponibles tout en permettant à la communauté de maintenir et améliorer ces données en temps réel.
+SportMap démocratise l'accès au sport en France en créant la première plateforme collaborative de cartographie des équipements sportifs. Notre mission est de connecter les sportifs aux infrastructures disponibles tout en permettant à la communauté de maintenir et d'améliorer ces données en temps réel.
 
 ### ✨ Fonctionnalités principales
-- **🗺️ Cartographie interactive** : 5,825+ installations sportives géolocalisées avec Mapbox GL JS
+- **🗺️ Cartographie web et mobile** : 5,825+ installations sportives (API Mapbox GL JS / Mapbox Maps RN)
+- **📍 Géolocalisation native** : Détection en direct et suivi de l'utilisateur pour trouver les équipements à proximité
+- **🎯 Clustering GPU-Accelerated** : Navigation fluide avec calculs natifs des regroupements de points
 - **🚨 Signalements communautaires** : Système de rapports d'incidents/maintenance
 - **👨‍💼 Administration** : Interface de gestion pour les modérateurs
 - **🔐 Authentification complète** : JWT, validation email, reset password
@@ -26,48 +29,44 @@ SportMap démocratise l'accès au sport en France en créant la première platef
 
 ```
 SportMap/
-├── 📁 Frontend/              # React + Vite + TailwindCSS
-│   ├── 📁 src/
-│   │   ├── 📁 components/    # Composants réutilisables
-│   │   ├── 📁 pages/         # Pages de l'application
-│   │   ├── 📁 services/      # APIs et services
-│   │   ├── 📁 hooks/         # Hooks React personnalisés
-│   │   └── 📁 utils/         # Utilitaires
-│   ├── 📄 package.json
-│   ├── 📄 vite.config.js
-│   └── 📄 Dockerfile
+├── 📁 Backend/               # API Django REST
+│   ├── 📁 authentication/    # JWT Auth, Users
+│   ├── 📁 installations/     # Données GeoJSON, clustering API 
+│   ├── 📁 signalements/      # Incident reports
+│   └── 📄 manage.py          # Entrypoint
 │
-├── 📁 Backend/               # Django REST API
-│   ├── 📁 authentication/   # Système d'authentification
-│   ├── 📁 installations/    # Gestion équipements sportifs
-│   ├── 📁 signalements/     # Système de signalements
-│   ├── 📁 config/           # Configuration Django
-│   ├── 📁 data/             # Dataset équipements (5,825)
-│   ├── 📄 requirements.txt
-│   ├── 📄 manage.py
-│   └── 📄 Dockerfile
+├── 📁 Frontend/              # PWA Web
+│   ├── 📁 src/               # Code React + Vite
+│   └── 📄 package.json       # Dépendances Web
 │
-└── 📄 docker-compose.yaml   # Stack complète
+├── 📁 Mobile/                # App Mobile Native
+│   ├── 📁 app/               # Expo Router (Tabs, Stacks)
+│   ├── 📁 components/        # UI BottomSheets, Sliders
+│   └── 📄 package.json       # Dépendances Mobile
+│
+└── 📁 dev-env/               # Outils DevOps & Docker Compose
 ```
 
 ### Stack Technologique
 
-#### Frontend
-- **Framework** : React 18.3.1 + Vite
+#### 🌐 Web (Frontend)
+- **Framework** : React 18.3.1 + Vite (PWA)
 - **Styling** : TailwindCSS + CSS Modules
 - **Cartographie** : Mapbox GL JS + react-map-gl
 - **Routing** : React Router DOM
-- **Animation** : Framer Motion
-- **Icons** : Lucide React + React Icons
-- **Analytics** : Google Analytics 4
 
-#### Backend
-- **Framework** : Django 4.2.7 + Django REST Framework
-- **Base de données** : PostgreSQL 15
+#### 📱 Mobile (iOS / Android)
+- **Framework** : React Native 0.74 / Expo SDK 51
+- **Cartographie native** : `@rnmapbox/maps` v10.1.33
+- **Animations / Gestures** : Reanimated 3, Gesture Handler, `@gorhom/bottom-sheet`
+- **Architecture** : Expo Router, Zustand (State), React Query (Data Fetching)
+- **Modules natifs** : `expo-location`
+
+#### ⚙️ Serveur & BDD (Backend)
+- **Framework** : Django 4.2.7 + DRF
+- **Base de données** : PostgreSQL 15 + PostGIS (GeoDjango readiness)
 - **Authentification** : JWT (PyJWT)
-- **Email** : Intégration Brevo
-- **Serveur** : Gunicorn + WhiteNoise
-- **CORS** : django-cors-headers
+- **Déploiement** : Gunicorn + WhiteNoise + Railway / Docker Compose
 
 ## 🚀 Installation et Développement
 
@@ -75,70 +74,34 @@ SportMap/
 - Python 3.9+
 - Node.js 18+
 - PostgreSQL 15+
-- Docker & Docker Compose (optionnel)
+- Docker & Docker Compose (Recommandé pour config locale)
+- Xcode (pour build iOS) / Android Studio (Android)
 
-### 🐳 Démarrage rapide avec Docker
-
+### 🐳 Démarrage Rapide (Web & API via Docker)
 ```bash
-# Cloner le projet
-git clone <repository-url>
-cd SportMap
+# Lancer les conteneurs PostgreSQL, Backend API et Frontend Vite
+cd dev-env
+./dev-start.sh
 
-# Démarrer l'ensemble de la stack
-docker-compose up --build
-
-# L'application sera disponible sur :
-# Frontend: http://localhost:5173
-# Backend: http://localhost:8000
+# Web UI => http://localhost:5173
+# API => http://localhost:8000
 ```
 
-### 🔧 Installation manuelle
-
-#### Backend (Django)
-
+### 📱 Démarrage Mobile (Expo)
+L'application mobile requiert une clé Mapbox et est compilée nativement (Prebuild).
 ```bash
-cd Backend
+cd Mobile
 
-# Créer un environnement virtuel
-python -m venv venv
-source venv/bin/activate  # Sur Windows: venv\Scripts\activate
+# 1. Configurer la variable Mapbox
+# Modifier ou créer un .env (EXPO_PUBLIC_MAPBOX_TOKEN=pk.xxx)
 
-# Installer les dépendances
-pip install -r requirements.txt
-
-# Configuration de la base de données
-# Créer une base PostgreSQL et configurer les variables d'environnement
-export DATABASE_URL="postgresql://user:password@localhost:5432/sportmap"
-export SECRET_KEY="your-secret-key"
-export DEBUG="True"
-
-# Migrations
-python manage.py migrate
-
-# Charger les données d'équipements sportifs
-python manage.py load_csv
-
-# Créer un superutilisateur
-python manage.py createsuperuser
-
-# Démarrer le serveur de développement
-python manage.py runserver
-```
-
-#### Frontend (React)
-
-```bash
-cd Frontend
-
-# Installer les dépendances
+# 2. Installer les packages
 npm install
 
-# Configuration
-# Créer un fichier .env avec votre token Mapbox
-echo "VITE_MAPBOX_TOKEN=your-mapbox-token" > .env
-
-# Démarrer le serveur de développement
-npm run dev
+# 3. Lancer l'application via Expo Dev Client (iOS en exemple)
+npx expo run:ios --device "iPhone"
+# ou pour simulateur :
+# npx expo run:ios
 ```
 
 ## 🌐 APIs Backend
@@ -164,73 +127,27 @@ npm run dev
 ## 📊 Données
 
 ### Dataset
-- **5,825 équipements sportifs** dans les Bouches-du-Rhône
+- **5,230 équipements sportifs** dans les Bouches-du-Rhône (suite à un nettoyage des données scolaires ou sensibles)
 - **168 types de sports** référencés
 - **Géolocalisation précise** de chaque installation
 - **Données nettoyées et filtrées** depuis les sources officielles
 
-### Format GeoJSON
-Les données sont servies au format GeoJSON optimisé pour l'affichage cartographique avec mise en cache intelligente.
-
-## 📈 Performances
-
-- **98% d'amélioration** des temps de réponse API
-- **Cache intelligent** avec invalidation automatique
-- **Optimisation des requêtes** PostgreSQL
-- **Compression GeoJSON** pour transferts rapides
-
-Voir le [rapport technique détaillé](./Backend/RAPPORT_MIGRATION.md) pour plus d'informations.
-
-## 🔧 Configuration Production
-
-### Variables d'environnement Backend
+### 🌍 Base de Données & Import
+Le dataset actuel s'importe facilement dans le conteneur backend ou un env virtuel :
 ```bash
-SECRET_KEY=your-django-secret-key
-DATABASE_URL=postgresql://...
-DEBUG=False
-ALLOWED_HOSTS=yourdomain.com
-BREVO_API_KEY=your-brevo-key
-```
-
-### Variables d'environnement Frontend
-```bash
-VITE_MAPBOX_TOKEN=your-mapbox-token
-VITE_API_BASE_URL=https://api.yourdomain.com
-```
-
-## 📱 Déploiement
-
-### Railway (Production)
-Le projet est configuré pour un déploiement automatique sur Railway avec :
-- **Backend** : Configuration railway.yml
-- **Frontend** : Build et serving automatique
-- **Base de données** : PostgreSQL Railway
-
-### Docker
-```bash
-# Production avec Docker
-docker-compose -f docker-compose.prod.yml up -d
+# Dans le conteneur backend ou env virtuel :
+python manage.py makemigrations
+python manage.py migrate
+python manage.py load_csv data/cleaned-data-es.csv --clear
 ```
 
 ## 🤝 Contribution
-
-1. Fork le projet
-2. Créer une branche feature (`git checkout -b feature/AmazingFeature`)
-3. Commit vos changements (`git commit -m 'Add AmazingFeature'`)
-4. Push vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrir une Pull Request
+1. Cloner le projet et créer une branche (ex: `feature/MapboxFilters`).
+2. Vérifier l'audit des **`.gitignore`** (ne jamais push `Mobile/ios`, `Mobile/android`, `node_modules`, `venv`, ou clés API).
+3. Soumettre une Pull Request pour validation par les pairs.
 
 ## 📝 License
-
 Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
-## 📞 Support
-
-Pour toute question ou problème :
-- 📧 Ouvrir une issue GitHub
-- 📋 Consulter la documentation technique dans `/Backend/RAPPORT_MIGRATION.md`
-- 🗺️ Vérifier les maquettes dans `/Frontend/maquette_web/` et `/Frontend/maquette_mobile/`
-
 ---
-
 **Fait avec ❤️ pour démocratiser l'accès au sport en France**

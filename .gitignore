@@ -1,0 +1,17 @@
+# OS
+.DS_Store
+Thumbs.db
+*~
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# Docker
+.dockerignore
+
+# Env
+.env
+.env.*
+!.env.example

@@ -57,6 +57,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('csv_file_path', type=str, help='Path to the CSV file')
+        parser.add_argument('--force', action='store_true', help='Force import despite existing data')
+        parser.add_argument('--clear', action='store_true', help='Clear existing data before import')
 
     def handle(self, *args, **options):
         csv_file_path = options['csv_file_path']
@@ -88,10 +90,10 @@ class Command(BaseCommand):
         error_count = 0
         
         try:
-            # Vider la table existante (optionnel)
-            # Installation.objects.all().delete()
-            # self.stdout.write("Cleared existing data.")
-            
+            if options.get('clear'):
+                Installation.objects.all().delete()
+                self.stdout.write("🗑️ Cleared existing data.")
+                
             with open(csv_file_path, 'r', encoding='utf-8') as file:
                 csv_reader = csv.DictReader(file)
                 installations_to_create = []
