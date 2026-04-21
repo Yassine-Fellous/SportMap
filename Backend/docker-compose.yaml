@@ -9,14 +9,11 @@ services:
       - DATABASE_URL=postgresql://sportadmin:${DB_PASSWORD}@db:5432/sport
     depends_on:
       - db
-    command: > #ajouts de la commande "python manage.py load_csv data/filtered-data-es.csv;" car probleme d'override la commande CMD du dockerfile ne s'exécutant pas
+    command: >
       sh -c "until pg_isready -h db -p 5432 -U sportadmin; do
            echo 'Waiting for PostgreSQL...'; sleep 1;
          done;
-         python manage.py makemigrations installations;
-         python manage.py migrate;
-         python manage.py load_csv data/filtered-data-es.csv; 
-         python manage.py runserver 0.0.0.0:80"
+         ./start.sh"
 
   db:
     image: postgres:15-alpine
