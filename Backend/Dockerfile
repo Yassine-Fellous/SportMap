@@ -19,4 +19,4 @@ COPY . .
 EXPOSE $PORT
 
 # Run migration and start the Django server
-CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && python manage.py sync_installations && python manage.py load_csv data/cleaned-data-es.csv || true && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"]
+CMD ["sh", "-c", "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"]
