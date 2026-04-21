@@ -25,6 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('installations.urls')),
     path('auth/', include('authentication.urls')),
-    path('signalements/', include('signalements.urls')),  # ← AJOUTER CETTE LIGNE
+    path('signalements/', include('signalements.urls')), 
+    path('analytics/', include('analytics.urls')),
     path('', home),
 ]

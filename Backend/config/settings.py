@@ -26,7 +26,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'installations',
     'authentication',
-    'signalements'
+    'signalements',
+    'analytics',
 ]
 
 MIDDLEWARE = [

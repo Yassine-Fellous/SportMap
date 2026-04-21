@@ -5,6 +5,13 @@
 from django.db import models
 from django.utils import timezone
 
+class RoleChoices(models.TextChoices):
+    SUPER_ADMIN = 'SUPER_ADMIN', 'Super Administrateur'
+    MUNICIPAL_AGENT = 'MUNICIPAL_AGENT', 'Agent Mairie'
+    CLUB_MANAGER = 'CLUB_MANAGER', 'Gérant de Club Privé'
+    ADVERTISER = 'ADVERTISER', 'Annonceur / Marque'
+    USER = 'USER', 'Sportif (Standard)'
+
 # Modèle pour l'authentification des utilisateurs
 class UserAuth(models.Model):
     email = models.EmailField(unique=True)
@@ -13,7 +20,16 @@ class UserAuth(models.Model):
     verification_code = models.CharField(max_length=6, blank=True, null=True)  # Stocke le hash, pas le mot de passe en clair
     reset_token = models.CharField(max_length=64, blank=True, null=True)
     reset_token_created = models.DateTimeField(blank=True, null=True)
-    is_admin = models.BooleanField(default=False)  # ← NOUVEAU
+    is_admin = models.BooleanField(default=False)  # Legacy (à déprécier à terme)
+    
+    # --- RBAC ---
+    role = models.CharField(
+        max_length=20,
+        choices=RoleChoices.choices,
+        default=RoleChoices.USER,
+        db_index=True
+    )
+    organization_id = models.IntegerField(null=True, blank=True) # Pour lier à une mairie/club spécifique
 
     class Meta:
         db_table = 'authentication_userauth'
