@@ -30,6 +30,10 @@ class UserAuth(models.Model):
         db_index=True
     )
     organization_id = models.IntegerField(null=True, blank=True) # Pour lier à une mairie/club spécifique
+    
+    # --- ANALYTICS ---
+    date_joined = models.DateTimeField(default=timezone.now)
+    last_login = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'authentication_userauth'

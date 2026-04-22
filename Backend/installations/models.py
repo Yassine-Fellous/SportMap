@@ -69,3 +69,23 @@ class Installation(models.Model):
         
     def __str__(self):
         return f"{self.inst_nom} - {self.equip_type_name}"
+
+class UserCheckIn(models.Model):
+    """
+    Traque la fréquentation d'un terrain sportif pour générer des Heatmaps réelles d'utilisation
+    """
+    installation = models.ForeignKey(Installation, on_delete=models.CASCADE, related_name='checkins')
+    utilisateur = models.ForeignKey('authentication.UserAuth', on_delete=models.CASCADE, related_name='checkins')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    # Stockera la position exacte de validation de présence si besoin
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+
+    class Meta:
+        db_table = 'installations_checkin'
+        verbose_name = 'Fréquentation'
+        verbose_name_plural = 'Fréquentations'
+        
+    def __str__(self):
+        return f"CheckIn: {self.utilisateur.email} -> {self.installation.inst_nom}"

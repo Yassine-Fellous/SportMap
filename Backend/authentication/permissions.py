@@ -33,3 +33,14 @@ class IsClubManager(BasePermission):
             request.user.is_authenticated and 
             request.user.role in [RoleChoices.CLUB_MANAGER, RoleChoices.SUPER_ADMIN]
         )
+
+class IsAdvertiser(BasePermission):
+    """
+    Annonceur ou Super Admin
+    """
+    def has_permission(self, request, view):
+        return bool(
+            request.user and 
+            request.user.is_authenticated and 
+            request.user.role in [RoleChoices.ADVERTISER, RoleChoices.SUPER_ADMIN]
+        )
