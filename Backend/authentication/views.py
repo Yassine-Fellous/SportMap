@@ -52,12 +52,19 @@ def login_view(request):
                 expire = datetime.utcnow() + timedelta(hours=1)
                 payload = {
                     "email": user.email,
+                    "role": user.role,
                     "exp": expire
                 }
                 token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
                 return JsonResponse({
                     "token": token,
                     "token_expire": expire,
+                    "user": {
+                        "id": user.id,
+                        "email": user.email,
+                        "role": user.role,
+                        "organization_id": user.organization_id
+                    },
                     "message": "Connexion réussie"
                 })
             else:

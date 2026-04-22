@@ -59,7 +59,7 @@ class AuthService {
       
       return {
         token: data.token,
-        user: {
+        user: data.user || {
           email: credentials.email,
           verified: true
         }
