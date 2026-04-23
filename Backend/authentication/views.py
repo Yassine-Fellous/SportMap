@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import check_password, make_password
 from .models import UserAuth
+from .serializers import UserProfileSerializer
 import secrets
 from datetime import timedelta, datetime
 from django.conf import settings
@@ -346,5 +347,37 @@ def resend_verification_code(request):
         except Exception as e:
             print(f"❌ DEBUG - Erreur resend_verification_code: {str(e)}")
             return JsonResponse({"error": f"Erreur serveur: {str(e)}"}, status=500)
+            
+    return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+
+
+@csrf_exempt
+def me_view(request):
+    """
+    Endpoint d'hydratation : Renvoie les infos complètes de l'utilisateur connecté.
+    Utilise le token JWT passé dans les headers.
+    """
+    if request.method == "GET":
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return JsonResponse({"error": "Token manquant ou format invalide"}, status=401)
+        
+        token = auth_header.split(' ')[1]
+        try:
+            # Décodage du token
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            email = payload.get("email")
+            
+            user = UserAuth.objects.get(email=email)
+            serializer = UserProfileSerializer(user)
+            
+            return JsonResponse(serializer.data)
+            
+        except jwt.ExpiredSignatureError:
+            return JsonResponse({"error": "Token expiré"}, status=401)
+        except jwt.InvalidTokenError:
+            return JsonResponse({"error": "Token invalide"}, status=401)
+        except UserAuth.DoesNotExist:
+            return JsonResponse({"error": "Utilisateur introuvable"}, status=404)
             
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)

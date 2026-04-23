@@ -13,14 +13,9 @@ class RoleChoices(models.TextChoices):
     USER = 'USER', 'Sportif (Standard)'
 
 # Modèle pour l'authentification des utilisateurs
-class UserAuth(models.Model):
-    email = models.EmailField(unique=True)
-    password = models.CharField(max_length=128)
-    is_verified = models.BooleanField(default=False)
-    verification_code = models.CharField(max_length=6, blank=True, null=True)  # Stocke le hash, pas le mot de passe en clair
-    reset_token = models.CharField(max_length=64, blank=True, null=True)
-    reset_token_created = models.DateTimeField(blank=True, null=True)
-    is_admin = models.BooleanField(default=False)  # Legacy (à déprécier à terme)
+
+
+ # Legacy (à déprécier à terme)
     
     # --- RBAC ---
     role = models.CharField(

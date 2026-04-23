@@ -309,7 +309,7 @@ export default function MapScreen() {
         {/* Afficher la position de l'utilisateur si la permission est accordée */}
         {locationGranted && (
           <MapboxGL.UserLocation
-            renderMode="native"
+            renderMode="normal"
             puckBearingEnabled={true}
             puckBearing="heading"
             onUpdate={(location) => {

@@ -169,7 +169,7 @@ const DashboardPage = () => {
                     onChange={e => setActiveRoleView(e.target.value)}
                     className="bg-transparent border-none text-sm font-bold text-gray-700 focus:ring-0 cursor-pointer"
                   >
-                    <option value="SUPER_ADMIN">Vue Globale Korta</option>
+                    <option value="SUPER_ADMIN">Vue Globale SportMap</option>
                     <option value="MUNICIPAL_AGENT">Panel Mairie</option>
                     <option value="CLUB_MANAGER">Panel Club</option>
                     <option value="ADVERTISER">Panel Annonceur</option>
