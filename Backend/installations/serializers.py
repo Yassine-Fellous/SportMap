@@ -9,6 +9,8 @@ import ast
 # selectionnne les champs nécessaires
 # et transforme les données pour l'API
 class InstallationSerializer(serializers.ModelSerializer):
+    inst_cp = serializers.SerializerMethodField()
+
     class Meta:
         model = Installation
         fields = [
@@ -18,6 +20,21 @@ class InstallationSerializer(serializers.ModelSerializer):
             'inst_cp', 'equip_prop_nom', 'equip_gest_type', 
             'inst_acc_handi_bool'
         ]
+
+    def get_inst_cp(self, obj):
+        """Conversion du Code INSEE (ex: 13201) en Code Postal (13001) pour l'affichage (PLM)"""
+        cp = obj.inst_cp
+        if cp and isinstance(cp, str) and len(cp) == 5:
+            # Marseille (132XX -> 130XX)
+            if cp.startswith('132'):
+                return cp.replace('132', '130', 1)
+            # Lyon (693XX -> 690XX)
+            elif cp.startswith('693'):
+                return cp.replace('693', '690', 1)
+            # Paris (751XX -> 750XX)
+            elif cp.startswith('751'):
+                return cp.replace('751', '750', 1)
+        return cp
 
 class SportsListSerializer(serializers.Serializer):
     """Serializer pour extraire et formatter la liste des sports"""
