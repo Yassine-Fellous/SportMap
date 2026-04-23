@@ -7,6 +7,7 @@ export default function VerifyCodeScreen() {
   const { email } = useLocalSearchParams();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const handleVerify = async () => {
     if (code.length !== 6) {
@@ -16,7 +17,8 @@ export default function VerifyCodeScreen() {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/auth/verify-code/', {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+      const response = await fetch(`${apiUrl}/auth/verify-code/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),
@@ -38,6 +40,30 @@ export default function VerifyCodeScreen() {
     }
   };
 
+  const handleResendCode = async () => {
+    setResending(true);
+    try {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+      const response = await fetch(`${apiUrl}/auth/resend-verification-code/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        Alert.alert("Code envoyé", "Un nouveau code de vérification a été envoyé à votre adresse email.");
+      } else {
+        Alert.alert("Erreur", result.error || result.message || "Impossible de renvoyer le code");
+      }
+    } catch (error) {
+      Alert.alert("Erreur", "Impossible de contacter le serveur");
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Vérification</Text>
@@ -55,9 +81,17 @@ export default function VerifyCodeScreen() {
       <TouchableOpacity 
         style={styles.button} 
         onPress={handleVerify}
-        disabled={loading}
+        disabled={loading || resending}
       >
         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Vérifier</Text>}
+      </TouchableOpacity>
+
+      <TouchableOpacity 
+        style={[styles.button, styles.resendButton]} 
+        onPress={handleResendCode}
+        disabled={loading || resending}
+      >
+        {resending ? <ActivityIndicator color="#007AFF" /> : <Text style={[styles.buttonText, styles.resendButtonText]}>Renvoyer le code</Text>}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.back()}>
@@ -87,8 +121,13 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
+    marginBottom: 10,
+  },
+  resendButton: {
+    backgroundColor: '#f0f0f0',
     marginBottom: 20,
   },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  linkText: { color: '#007AFF', textAlign: 'center', fontSize: 14 },
+  resendButtonText: { color: '#007AFF' },
+  linkText: { color: '#007AFF', textAlign: 'center', fontSize: 14, marginTop: 10 },
 });

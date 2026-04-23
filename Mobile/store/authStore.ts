@@ -16,9 +16,10 @@ interface User {
 
 interface AuthState {
   accessToken: string | null;
+  refreshToken: string | null;
   user: User | null;
   isAuthenticated: boolean;
-  setAuth: (token: string, user: User) => void;
+  setAuth: (token: string, refreshToken: string, user: User) => void;
   setToken: (token: string) => void; // Alias pour compatibilité
   updateUser: (user: User) => void;
   logout: () => void;
@@ -29,18 +30,20 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       accessToken: null,
+      refreshToken: null,
       user: null,
       isAuthenticated: false,
 
-      // Définit le token et l'utilisateur (après login)
-      setAuth: (token: string, user: User) =>
+      // Définit les tokens et l'utilisateur (après login)
+      setAuth: (token: string, refreshToken: string, user: User) =>
         set({
           accessToken: token,
+          refreshToken: refreshToken,
           user: user,
           isAuthenticated: true,
         }),
 
-      // Alias pour ne pas casser le login existant
+      // Alias pour ne pas casser le login existant (mais devrait être migré vers setAuth)
       setToken: (token: string) =>
         set({
           accessToken: token,
@@ -57,6 +60,7 @@ export const useAuthStore = create<AuthState>()(
       logout: () =>
         set({
           accessToken: null,
+          refreshToken: null,
           user: null,
           isAuthenticated: false,
         }),

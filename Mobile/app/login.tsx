@@ -35,8 +35,8 @@ export default function LoginScreen() {
       const result = await response.json();
 
       if (response.ok) {
-        // Enregistre le token et l'utilisateur dans le store global
-        setAuth(result.token, result.user);
+        // Enregistre l'access token, le refresh token et l'utilisateur dans le store global
+        setAuth(result.token, result.refresh_token, result.user);
         // La redirection vers /(tabs) est gérée par le RootLayout
       } else {
         if (response.status === 403) {

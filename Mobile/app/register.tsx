@@ -27,7 +27,8 @@ export default function RegisterScreen() {
   const onSubmit = async (data: RegisterFormData) => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/auth/register/', {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+      const response = await fetch(`${apiUrl}/auth/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

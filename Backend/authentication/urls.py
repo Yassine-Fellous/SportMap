@@ -6,6 +6,7 @@ urlpatterns = [
     path('health/', views.health_check, name='health_check'),
     path('register/', views.register_view, name='register'),
     path('login/', views.login_view, name='login'),
+    path('refresh-token/', views.refresh_token_view, name='refresh_token'), # ← Renouvellement JWT
     path('me/', views.me_view, name='me'), # ← Hydratation du profil
     path('verify-code/', views.verify_code_view, name='verify_code'),
     path('resend-verification-code/', views.resend_verification_code, name='resend_verification_code'),

@@ -48,18 +48,50 @@ def login_view(request):
             user = UserAuth.objects.get(email=email)
             if check_password(password, user.password):
                 if not user.is_verified:
-                    return JsonResponse({'error': 'Compte non validé'}, status=403)
-                # Génère un JWT qui expire dans 1h
-                expire = datetime.utcnow() + timedelta(hours=1)
-                payload = {
+                    # Auto-resend code
+                    code = str(random.randint(100000, 999999))
+                    user.verification_code = code
+                    user.save()
+                    html_content = f"""
+                    <html>
+                      <body style="background:#f7f9fc;padding:40px;">
+                        <div style="max-width:400px;margin:auto;background:white;border-radius:12px;box-shadow:0 2px 8px #e3e8ee;padding:32px;">
+                          <h2 style="color:#2563eb;font-family:sans-serif;">Code de vérification <span style="color:#0ea5e9;">SportMap</span></h2>
+                          <p style="font-size:16px;color:#334155;font-family:sans-serif;">
+                            Voici votre nouveau code de vérification :
+                          </p>
+                          <div style="font-size:32px;font-weight:bold;color:#2563eb;background:#e0f2fe;padding:16px;border-radius:8px;text-align:center;letter-spacing:4px;">
+                            {code}
+                          </div>
+                        </div>
+                      </body>
+                    </html>
+                    """
+                    send_email_via_brevo_api(email, "Votre code de validation SportMap", html_content, f"Votre code de validation : {code}")
+                    return JsonResponse({'error': 'Compte non validé, un nouveau code a été envoyé', 'requires_verification': True}, status=403)
+                
+                # 1. Access Token (Courte durée : 1h)
+                access_expire = datetime.utcnow() + timedelta(hours=1)
+                access_payload = {
                     "email": user.email,
                     "role": user.role,
-                    "exp": expire
+                    "exp": access_expire,
+                    "type": "access"
                 }
-                token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+                access_token = jwt.encode(access_payload, settings.SECRET_KEY, algorithm="HS256")
+                
+                # 2. Refresh Token (Longue durée : 7 jours)
+                refresh_expire = datetime.utcnow() + timedelta(days=7)
+                refresh_payload = {
+                    "email": user.email,
+                    "exp": refresh_expire,
+                    "type": "refresh"
+                }
+                refresh_token = jwt.encode(refresh_payload, settings.SECRET_KEY, algorithm="HS256")
+
                 return JsonResponse({
-                    "token": token,
-                    "token_expire": expire,
+                    "token": access_token,
+                    "refresh_token": refresh_token,
                     "user": {
                         "id": user.id,
                         "email": user.email,
@@ -75,6 +107,50 @@ def login_view(request):
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
 
 @csrf_exempt
+def refresh_token_view(request):
+    """
+    Endpoint pour obtenir un nouvel access token à partir d'un refresh token.
+    """
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            refresh_token = data.get("refresh_token")
+            
+            if not refresh_token:
+                return JsonResponse({"error": "Refresh token manquant"}, status=400)
+            
+            # Décodage et validation du refresh token
+            payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=["HS256"])
+            
+            if payload.get("type") != "refresh":
+                return JsonResponse({"error": "Type de token invalide"}, status=401)
+            
+            email = payload.get("email")
+            user = UserAuth.objects.get(email=email)
+            
+            # Génération d'un nouvel access token
+            access_expire = datetime.utcnow() + timedelta(hours=1)
+            access_payload = {
+                "email": user.email,
+                "role": user.role,
+                "exp": access_expire,
+                "type": "access"
+            }
+            new_access_token = jwt.encode(access_payload, settings.SECRET_KEY, algorithm="HS256")
+            
+            return JsonResponse({
+                "access_token": new_access_token,
+                "expires_at": access_expire
+            })
+            
+        except jwt.ExpiredSignatureError:
+            return JsonResponse({"error": "Refresh token expiré, veuillez vous reconnecter"}, status=401)
+        except (jwt.InvalidTokenError, UserAuth.DoesNotExist):
+            return JsonResponse({"error": "Refresh token invalide"}, status=401)
+            
+    return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+
+@csrf_exempt
 def register_view(request):
     if request.method == "POST":
         try:
@@ -86,7 +162,11 @@ def register_view(request):
                 return JsonResponse({"error": "Email et mot de passe requis"}, status=400)
             
             if UserAuth.objects.filter(email=email).exists():
-                return JsonResponse({"error": "Email déjà utilisé"}, status=409)
+                existing_user = UserAuth.objects.get(email=email)
+                if existing_user.is_verified:
+                    return JsonResponse({"error": "Email déjà utilisé"}, status=409)
+                else:
+                    existing_user.delete() # On supprime le compte non vérifié pour le recréer proprement avec un nouveau code
             
             code = str(random.randint(100000, 999999))
             user = UserAuth.objects.create(

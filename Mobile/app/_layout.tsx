@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SplashScreen from 'expo-splash-screen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import api from '../src/services/api';
 
 // Initialisation du client TanStack Query
 const queryClient = new QueryClient();
@@ -22,23 +23,17 @@ export default function RootLayout() {
       try {
         // --- HYDRATATION DU PROFIL ---
         if (accessToken) {
-          const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-          const response = await fetch(`${apiUrl}/auth/me/`, {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-            },
-          });
-
-          if (response.ok) {
-            const userData = await response.json();
-            updateUser(userData); // On injecte les données fraîches dans Zustand
-          } else if (response.status === 401) {
-            // Si le token est expiré ou invalide, on déconnecte
-            logout();
+          try {
+            // Utilise l'instance api avec intercepteur
+            const response = await api.get('/auth/me/');
+            updateUser(response.data);
+          } catch (error: any) {
+            console.warn("Erreur hydratation:", error.message);
+            // L'intercepteur gère déjà le logout si le refresh échoue
           }
         }
       } catch (e) {
-        console.warn("Erreur lors de l'hydratation initiale:", e);
+        console.warn("Erreur lors de l'application:", e);
       } finally {
         setAppIsReady(true);
       }
