@@ -193,6 +193,7 @@ const MapPopup = ({ popupInfo, onClose }) => {
                     lineHeight: '1.4',
                   }}>
                     {popupInfo.properties.address}
+                    {popupInfo.properties.city && <><br/>{popupInfo.properties.city}</>}
                   </p>
                 </div>
               </div>

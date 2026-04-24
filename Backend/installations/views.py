@@ -139,19 +139,26 @@ def get_geojson(request):
                 
                 # Vérification exacte comme votre code
                 if not coordonnees or "lon" not in coordonnees or "lat" not in coordonnees:
-                    print(f"Skipping installation {installation.inst_numero}: Invalid coordinates")
                     continue
 
                 # Parser les sports de manière sécurisée
                 sports = installation.equip_aps_nom
                 if sports and isinstance(sports, str):
                     try:
-                        # Si c'est une liste Python stockée comme string
                         if sports.startswith('[') and sports.endswith(']'):
                             sports = ast.literal_eval(sports)
                     except (ValueError, SyntaxError):
-                        # Garder comme string si parsing échoue
                         pass
+
+                # Formatage du Code INSEE en Code Postal (PLM)
+                cp = installation.inst_cp
+                if cp and isinstance(cp, str) and len(cp) == 5:
+                    if cp.startswith('132'):
+                        cp = cp.replace('132', '130', 1)
+                    elif cp.startswith('693'):
+                        cp = cp.replace('693', '690', 1)
+                    elif cp.startswith('751'):
+                        cp = cp.replace('751', '750', 1)
 
                 feature = {
                     "type": "Feature",
@@ -171,7 +178,7 @@ def get_geojson(request):
                         "free_access": installation.equip_acc_libre,
                         "url": installation.equip_url,
                         "address": installation.inst_adresse,
-                        "city": installation.inst_cp,
+                        "city": cp,
                         "owner": installation.equip_prop_nom,
                         "gestion": installation.equip_gest_type,
                         "inst_acc_handi_bool": installation.inst_acc_handi_bool
