@@ -68,41 +68,61 @@ SportMap/
 - **Authentification** : JWT (PyJWT)
 - **Déploiement** : Gunicorn + WhiteNoise + Railway / Docker Compose
 
-## 🚀 Installation et Développement
+## 🚀 Installation et Développement (macOS)
 
-### Prérequis
-- Python 3.9+
-- Node.js 18+
-- PostgreSQL 15+
-- Docker & Docker Compose (Recommandé pour config locale)
-- Xcode (pour build iOS) / Android Studio (Android)
+Suivez ces étapes pour configurer l'ensemble de l'écosystème SportMap sur votre Mac.
 
-### 🐳 Démarrage Rapide (Web & API via Docker)
+### 1. Prérequis
+- **Homebrew** : `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+- **Node.js & Python** : `brew install node python@3.11`
+- **Docker** : [Télécharger Docker Desktop](https://www.docker.com/products/docker-desktop)
+- **Outils iOS** : Installer **Xcode** (via l'App Store) et **CocoaPods** (`brew install cocoapods`)
+
+### 2. Cloner le Projet
 ```bash
-# Lancer les conteneurs PostgreSQL, Backend API et Frontend Vite
-cd dev-env
-./dev-start.sh
-
-# Web UI => http://localhost:5173
-# API => http://localhost:8000
+git clone https://github.com/votre-compte/SportMap.git
+cd SportMap
 ```
 
-### 📱 Démarrage Mobile (Expo)
-L'application mobile requiert une clé Mapbox et est compilée nativement (Prebuild).
+### 3. Backend & Base de données (Via Docker)
+C'est la méthode recommandée pour avoir une base de données PostgreSQL/PostGIS fonctionnelle immédiatement.
 ```bash
-cd Mobile
+cd dev-env
+cp .env.example .env  # Configurez vos clés ici
+./dev-start.sh
+```
+*L'API est maintenant disponible sur [http://localhost:8000](http://localhost:8000).*
 
-# 1. Configurer la variable Mapbox
-# Modifier ou créer un .env (EXPO_PUBLIC_MAPBOX_TOKEN=pk.xxx)
+#### Créer un compte Admin
+```bash
+# Entrer dans le conteneur backend
+docker exec -it sportmap-backend python manage.py createsuperuser
+```
 
-# 2. Installer les packages
+### 4. Application Mobile (iOS)
+L'application mobile utilise Expo avec des modules natifs (Mapbox).
+```bash
+cd ../Mobile
+
+# 1. Installer les dépendances
 npm install
 
-# 3. Lancer l'application via Expo Dev Client (iOS en exemple)
-npx expo run:ios --device "iPhone"
-# ou pour simulateur :
-# npx expo run:ios
+# 2. Configurer Mapbox (Indispensable)
+# Créez un fichier .env dans le dossier Mobile/
+echo "EXPO_PUBLIC_MAPBOX_TOKEN=votre_cle_mapbox_pk_ici" > .env
+
+# 3. Installer les dépendances natives (CocoaPods)
+cd ios && pod install && cd ..
+
+# 4. Lancer sur simulateur iOS
+npx expo run:ios
 ```
+
+### 5. Accès aux interfaces
+- **📱 Mobile (Simulateur)** : S'ouvre automatiquement via le build Xcode.
+- **🌐 Backend API** : [http://localhost:8000](http://localhost:8000)
+- **🛠️ Admin Django** : [http://localhost:8000/admin](http://localhost:8000/admin)
+- **💻 Web PWA (Legacy)** : [http://localhost:5173](http://localhost:5173)
 
 ## 🌐 APIs Backend
 
@@ -151,3 +171,4 @@ Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de 
 
 ---
 **Fait avec ❤️ pour démocratiser l'accès au sport en France**
+
